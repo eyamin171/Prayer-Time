@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Eyamin's Prayer Time</title>
+    <style>
+        * { box-sizing: border-box; }
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            font-family: 'Segoe UI', sans-serif;
+            background: url('https://i.pinimg.com/474x/fa/78/c3/fa78c3d92279ea01ac828af65edb32e1.jpg') no-repeat center center fixed;
+            background-size: cover;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5); z-index: 1;
+        }
+
+        .dashboard {
+            position: relative; z-index: 2;
+            width: 90%; max-width: 400px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            padding: 25px 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .brand-name { color: #ffd700; font-weight: bold; font-size: 0.9rem; letter-spacing: 2px; }
+        .clock { font-size: 5.5rem; color: white; margin: 10px 0 0 0; font-weight: 200; line-height: 1; }
+        .sec-display { font-size: 2rem; color: #ffd700; opacity: 0.8; margin-bottom: 5px; font-weight: 300; }
+
+        /* কাউন্টডাউন স্টাইল */
+        .countdown-box { margin-bottom: 15px; }
+        .countdown-label { color: #ddd; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+        .countdown-time { color: #ffd700; font-size: 1.4rem; font-weight: bold; }
+
+        .date { color: #ddd; font-size: 0.9rem; margin-bottom: 5px; }
+        .ramadan-tag {
+            background: rgba(255, 215, 0, 0.2);
+            color: #ffd700; padding: 5px 20px;
+            border-radius: 20px; display: inline-block;
+            font-weight: bold; font-size: 1.1rem; margin-bottom: 10px;
+        }
+
+        .prayer-table { width: 100%; border-collapse: collapse; }
+        .prayer-row td {
+            padding: 12px 10px; color: white; font-size: 1.1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .name { text-align: left; opacity: 0.8; }
+        .time { text-align: right; font-weight: bold; }
+        .active { background: rgba(255, 215, 0, 0.2); border-radius: 10px; }
+        .active td { color: #ffd700 !important; }
+        .sehri-row td { border-bottom: none; color: #4dd0e1 !important; }
+    </style>
+</head>
+<body>
+
+<div class="overlay"></div>
+
+<div class="dashboard">
+    <div class="brand-name">EYAMIN'S PRAYER TIME</div>
+    <div class="clock" id="clock">00:00</div>
+    <div class="sec-display" id="sec">00</div>
+    
+    <div class="date">Thursday, 26 Feb 2026</div>
+    <div class="ramadan-tag" id="ramadan">8 Ramadan 1447 AH</div>
+
+    <div class="countdown-box">
+        <div class="countdown-label">Your Next Prayer Time Remaining</div>
+        <div class="countdown-time" id="countdown">00:00:00</div>
+    </div>
+
+    <table class="prayer-table">
+        <tr id="fajr-row" class="prayer-row"><td class="name">FAJR</td><td class="time">5:12</td></tr>
+        <tr id="dhuhr-row" class="prayer-row"><td class="name">DHUHR</td><td class="time">12:15</td></tr>
+        <tr id="asr-row" class="prayer-row"><td class="name">ASR</td><td class="time">4:15</td></tr>
+        <tr id="maghrib-row" class="prayer-row"><td class="name" style="color: #ff7043;">IFTAR / MAGHRIB</td><td class="time" style="color: #ff7043;">6:01</td></tr>
+        <tr id="isha-row" class="prayer-row"><td class="name">ISHA</td><td class="time">7:20</td></tr>
+        <tr class="prayer-row sehri-row"><td class="name">SEHRI LAST TIME</td><td class="time">5:07</td></tr>
+    </table>
+</div>
+
+<script>
+    function updateApp() {
+        const now = new Date();
+        
+        // বর্তমান সময় আপডেট
+        const h = now.getHours().toString().padStart(2, '0');
+        const m = now.getMinutes().toString().padStart(2, '0');
+        const s = now.getSeconds().toString().padStart(2, '0');
+        document.getElementById('clock').textContent = h + ":" + m;
+        document.getElementById('sec').textContent = s;
+
+        // আপনার দেওয়া সময় অনুযায়ী শিডিউল
+        const schedule = [
+            {id:'fajr', name: 'Fajr', h: 5, m: 12},
+            {id:'dhuhr', name: 'Dhuhr', h: 12, m: 15},
+            {id:'asr', name: 'Asr', h: 16, m: 15}, // ৪:১৫ PM মানে ১৬:১৫
+            {id:'maghrib', name: 'Maghrib', h: 18, m: 1}, // ৬:০১ PM মানে ১৮:০১
+            {id:'isha', name: 'Isha', h: 19, m: 20}  // ৭:২০ PM মানে ১৯:২০
+        ];
+
+        let nextPrayer = null;
+        const currentMins = now.getHours() * 60 + now.getMinutes();
+
+        // পরবর্তী ওয়াক্ত খুঁজে বের করা এবং হাইলাইট করা
+        schedule.forEach(p => document.getElementById(p.id + '-row').classList.remove('active'));
+        
+        for (let item of schedule) {
+            const itemMins = item.h * 60 + item.m;
+            if (itemMins > currentMins) {
+                nextPrayer = item;
+                document.getElementById(item.id + '-row').classList.add('active');
+                break;
+            }
+        }
+
+        // যদি এশার পর হয়, তবে পরবর্তী ওয়াক্ত ফজর (পরদিন)
+        if (!nextPrayer) {
+            nextPrayer = schedule[0];
+            document.getElementById('fajr-row').classList.add('active');
+        }
+
+        // কাউন্টডাউন হিসাব করা
+        let pDate = new Date();
+        pDate.setHours(nextPrayer.h, nextPrayer.m, 0);
+        
+        if (pDate < now) { pDate.setDate(pDate.getDate() + 1); } // পরদিনের জন্য
+
+        let diff = pDate - now;
+        let diffH = Math.floor(diff / (1000 * 60 * 60)).toString().padStart(2, '0');
+        let diffM = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
+        let diffS = Math.floor((diff % (1000 * 60)) / 1000).toString().padStart(2, '0');
+
+        document.getElementById('countdown').textContent = `${diffH}:${diffM}:${diffS}`;
+
+        // রমজান তারিখ লজিক
+        const isAfterMaghrib = (now.getHours() > 18) || (now.getHours() === 18 && now.getMinutes() >= 1);
+        document.getElementById('ramadan').textContent = (isAfterMaghrib ? 9 : 8) + " Ramadan 1447 AH";
+    }
+
+    setInterval(updateApp, 1000);
+    updateApp();
+</script>
+
+</body>
+</html>
