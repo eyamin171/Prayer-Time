@@ -7,177 +7,190 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#000000">
     <title>Eyamin's Prayer Time</title>
-    
-    <link rel="manifest" href="manifest.json">
-
     <style>
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: url('https://i.pinimg.com/474x/fa/78/c3/fa78c3d92279ea01ac828af65edb32e1.jpg') no-repeat center center fixed;
             background-size: cover;
-            display: flex; justify-content: center; align-items: center;
-            overflow: hidden; /* অ্যাপ লুকে স্ক্রলিং বন্ধ রাখতে */
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            overflow: hidden;
         }
 
-        .overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.5); z-index: 1;
+        /* মারকিউ ব্যানার স্টাইল */
+        .marquee-container {
+            position: relative; z-index: 2; width: 90%; max-width: 400px;
+            background: rgba(0, 0, 0, 0.5); color: #ffd700; padding: 10px;
+            border-radius: 50px; overflow: hidden; margin-bottom: 15px;
+            border: 1px solid rgba(255, 215, 0, 0.3); white-space: nowrap;
         }
+        .marquee-text {
+            display: inline-block; padding-left: 100%;
+            animation: marquee 12s linear infinite; font-size: 0.85rem; font-weight: bold;
+        }
+        @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1; }
+        
         .dashboard {
-            position: relative; z-index: 2;
-            width: 90%; max-width: 400px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 30px;
-            padding: 30px 20px;
-            text-align: center;
+            position: relative; z-index: 2; width: 90%; max-width: 400px;
+            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 30px; padding: 30px 20px; text-align: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease;
         }
 
         .brand-name { color: #ffd700; font-weight: bold; font-size: 0.9rem; letter-spacing: 2px; margin-bottom: 5px; }
-        
-        .clock { font-size: 4.5rem; color: white; margin: 15px 0; font-weight: 200; line-height: 1; letter-spacing: -2px; }
-
-        .date { color: #ddd; font-size: 0.9rem; margin-bottom: 5px; }
+        .clock { font-size: 4.5rem; color: white; margin: 10px 0; font-weight: 200; line-height: 1; letter-spacing: -2px; }
+        .date { color: #ddd; font-size: 0.85rem; margin-bottom: 5px; }
         .ramadan-tag {
-            background: rgba(255, 215, 0, 0.2);
-            color: #ffd700; padding: 5px 20px;
-            border-radius: 20px; display: inline-block;
-            font-weight: bold; font-size: 1.1rem; margin-bottom: 15px;
+            background: rgba(255, 215, 0, 0.2); color: #ffd700; padding: 5px 20px;
+            border-radius: 20px; display: inline-block; font-weight: bold; font-size: 1rem; margin-bottom: 15px;
         }
-
         .countdown-box { margin-bottom: 15px; }
-        .countdown-label { color: #ddd; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+        .countdown-label { color: #ddd; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }
         .countdown-time { color: #ffd700; font-size: 1.4rem; font-weight: bold; }
 
         .prayer-table { width: 100%; border-collapse: collapse; }
-        .prayer-row td {
-            padding: 12px 10px; color: white; font-size: 1.1rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .name { text-align: left; opacity: 0.8; position: relative; }
+        .prayer-row { cursor: pointer; transition: background 0.2s; }
+        .prayer-row:active { background: rgba(255, 255, 255, 0.1); }
+        .prayer-row td { padding: 12px 10px; color: white; font-size: 1.05rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+        .name { text-align: left; opacity: 0.9; }
         .time { text-align: right; font-weight: bold; }
         
-        .active { background: rgba(255, 215, 0, 0.2); border-radius: 10px; }
+        .active { background: rgba(255, 215, 0, 0.2) !important; border-radius: 12px; }
         .active td { color: #ffd700 !important; }
-
-        .next-badge {
-            background: #2ecc71;
-            color: white;
-            font-size: 0.6rem;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-left: 8px;
-            vertical-align: middle;
-            display: none;
-        }
+        .next-badge { background: #2ecc71; color: white; font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; margin-left: 8px; display: none; }
         .active .next-badge { display: inline-block; }
 
-        .sehri-row td { border-bottom: none; color: #4dd0e1 !important; }
+        #msg-panel {
+            position: fixed; bottom: -100%; left: 0; width: 100%; height: auto;
+            background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(20px);
+            z-index: 100; border-top-left-radius: 30px; border-top-right-radius: 30px;
+            padding: 40px 30px; text-align: center; color: white;
+            transition: bottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
+        }
+        #msg-text { font-size: 1.2rem; line-height: 1.6; margin-bottom: 30px; color: #f0f0f0; }
+        .done-btn {
+            background: #ffd700; color: black; border: none; padding: 12px 40px;
+            font-size: 1rem; font-weight: bold; border-radius: 15px; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+        }
     </style>
 </head>
 <body>
 
+<div class="marquee-container">
+    <div class="marquee-text" id="marquee-box">📢 প্রত্যেকটি ওয়াক্তে ক্লিক করে ম্যাসেজ টি পড়ুন।</div>
+</div>
 <div class="overlay"></div>
 
-<div class="dashboard">
+<div class="dashboard" id="main-dash">
     <div class="brand-name">EYAMIN'S PRAYER TIME</div>
-    
     <div class="clock" id="clock">00:00:00</div>
+    <div class="date" id="live-date">...</div>
+    <div class="ramadan-tag" id="ramadan">...</div>
     
-    <div class="date" id="live-date">Thursday, 26 Feb 2026</div>
-    <div class="ramadan-tag" id="ramadan">8 Ramadan 1447 AH</div>
-
     <div class="countdown-box">
-        <div class="countdown-label" id="timer-label">Your Next Prayer Time Remaining</div>
+        <div class="countdown-label" id="timer-label">Next Prayer Remaining</div>
         <div class="countdown-time" id="countdown">00:00:00</div>
     </div>
 
     <table class="prayer-table">
-        <tr id="fajr-row" class="prayer-row"><td class="name">FAJR <span class="next-badge">NEXT</span></td><td class="time">5:12</td></tr>
-        <tr id="dhuhr-row" class="prayer-row"><td class="name">DHUHR <span class="next-badge">NEXT</span></td><td class="time">12:15</td></tr>
-        <tr id="asr-row" class="prayer-row"><td class="name">ASR <span class="next-badge">NEXT</span></td><td class="time">4:15</td></tr>
-        <tr id="maghrib-row" class="prayer-row"><td class="name" style="color: #ff7043;">IFTAR <span class="next-badge">NEXT</span></td><td class="time" style="color: #ff7043;">6:01</td></tr>
-        <tr id="isha-row" class="prayer-row"><td class="name">ISHA <span class="next-badge">NEXT</span></td><td class="time">7:20</td></tr>
-        <tr class="prayer-row sehri-row"><td class="name">SEHRI LAST TIME</td><td class="time">5:07</td></tr>
+        <tr id="fajr-row" class="prayer-row" onclick="showMessage('fajr')"><td class="name">FAJR <span class="next-badge">NEXT</span></td><td class="time">--:--</td></tr>
+        <tr id="dhuhr-row" class="prayer-row" onclick="showMessage('dhuhr')"><td class="name">DHUHR <span class="next-badge">NEXT</span></td><td class="time">12:15</td></tr>
+        <tr id="asr-row" class="prayer-row" onclick="showMessage('asr')"><td class="name">ASR <span class="next-badge">NEXT</span></td><td class="time">4:15</td></tr>
+        <tr id="maghrib-row" class="prayer-row" onclick="showMessage('maghrib')"><td class="name" style="color: #ff7043;">IFTAR <span class="next-badge">NEXT</span></td><td class="time" style="color: #ff7043;">--:--</td></tr>
+        <tr id="isha-row" class="prayer-row" onclick="showMessage('isha')"><td class="name">ISHA <span class="next-badge">NEXT</span></td><td class="time">7:20</td></tr>
+        <tr class="prayer-row" style="border-top: 1px solid rgba(255,255,255,0.2)" onclick="showMessage('sehri')"><td class="name" style="color: #4dd0e1;">SEHRI LAST TIME</td><td class="time" id="sehri-val" style="color: #4dd0e1;">--:--</td></tr>
     </table>
 </div>
 
+<div id="msg-panel">
+    <div id="msg-text"></div>
+    <button class="done-btn" onclick="hideMessage()">Done</button>
+</div>
+
 <script>
-    function updateApp() {
-        const now = new Date();
-        
-        // ঘড়ি ও তারিখ আপডেট
-        const h = now.getHours().toString().padStart(2, '0');
-        const m = now.getMinutes().toString().padStart(2, '0');
-        const s = now.getSeconds().toString().padStart(2, '0');
-        document.getElementById('clock').textContent = h + ":" + m + ":" + s;
-        
-        const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
-        document.getElementById('live-date').textContent = now.toLocaleDateString('en-US', options);
+    // মারকিউ আপডেট লজিক
+    const bannerMessages = [
+        "📢 প্রত্যেকটি ওয়াক্তে ক্লিক করে ম্যাসেজ টি পড়ুন।",
+        "📌 এরকম ব্যানার বা ওয়েবঅ্যাপ বানাতে চাইলে যোগাযোগ :- +8801924409171 (Whatsapp)"
+    ];
+    let msgIndex = 0;
+    const box = document.getElementById('marquee-box');
+    setInterval(() => {
+        box.style.animation = 'none'; // অ্যানিমেশন রিস্টার্ট
+        setTimeout(() => {
+            msgIndex = (msgIndex + 1) % bannerMessages.length;
+            box.innerText = bannerMessages[msgIndex];
+            box.style.animation = 'marquee 12s linear infinite';
+        }, 100);
+    }, 12000);
 
-        // শিডিউল
-        const schedule = [
-            {id:'fajr', h: 5, m: 12},
-            {id:'dhuhr', h: 12, m: 15},
-            {id:'asr', h: 16, m: 15},
-            {id:'maghrib', h: 18, m: 1},
-            {id:'isha', h: 19, m: 20}
-        ];
-        const sehriTime = { h: 5, m: 7 };
+    // বাকি অ্যাপ লজিক
+    let timeOffset = 0;
+    const messages = {
+        fajr: "ভোরের স্নিগ্ধতায় ফজর নামাজের মাধ্যমে দিনটি শুরু করলে মনে এক প্রশান্তিময় পবিত্রতা অনুভূত হয়।",
+        dhuhr: "মধ্যাহ্নের ব্যস্ততার মাঝে যোহর নামাজ আমাদের কর্মচঞ্চল মনে স্রষ্টার সান্নিধ্য ও বিশ্রামের সুযোগ করে দেয়।",
+        asr: "পড়ন্ত বিকেলের মায়াবী আলোয় আসর নামাজ আদায় করা দিনের ক্লান্তি দূর করার এক মহৌষধ।",
+        maghrib: "সারাদিন সিয়াম সাধনার পর এক গ্লাস ঠান্ডা শরবত আর খেজুর দিয়ে ইফতার করার মুহূর্তটি পরম তৃপ্তির ও ধৈর্যের পুরস্কার।",
+        isha: "রাতের নীরবতায় ইশা নামাজের সিজদাহ আমাদের সারা দিনের সব দুশ্চিন্তা থেকে মুক্তি দিয়ে গভীর ঘুমের প্রস্তুতি দেয়।",
+        sehri: "বরকতময় রমজানের শেষ রাতে পরিবারের সবার সাথে সাহরি খাওয়া কেবল একটি নিয়ম নয়, বরং এটি এক আধ্যাত্মিক আনন্দ।"
+    };
 
-        const currentTotalMins = now.getHours() * 60 + now.getMinutes();
-        const sehriTotalMins = sehriTime.h * 60 + sehriTime.m;
-        
-        const diffToSehri = sehriTotalMins - currentTotalMins;
-        const isSehriMode = diffToSehri <= 30 && diffToSehri > 0;
-
-        let targetDate = new Date();
-        const timerLabel = document.getElementById('timer-label');
-
-        if (isSehriMode) {
-            timerLabel.textContent = "Sehri Last Time Remaining";
-            targetDate.setHours(sehriTime.h, sehriTime.m, 0);
-            schedule.forEach(p => document.getElementById(p.id + '-row').classList.remove('active'));
-        } else {
-            timerLabel.textContent = "Your Next Prayer Time Remaining";
-            let nextPrayer = null;
-            
-            schedule.forEach(p => document.getElementById(p.id + '-row').classList.remove('active'));
-            for (let item of schedule) {
-                if ((item.h * 60 + item.m) > currentTotalMins) {
-                    nextPrayer = item;
-                    document.getElementById(item.id + '-row').classList.add('active');
-                    break;
-                }
-            }
-            if (!nextPrayer) {
-                nextPrayer = schedule[0];
-                document.getElementById('fajr-row').classList.add('active');
-            }
-            targetDate.setHours(nextPrayer.h, nextPrayer.m, 0);
-            if (targetDate < now) { targetDate.setDate(targetDate.getDate() + 1); }
-        }
-
-        let diff = targetDate - now;
-        let hh = Math.floor(diff / (1000 * 60 * 60)).toString().padStart(2, '0');
-        let mm = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
-        let ss = Math.floor((diff % (1000 * 60)) / 1000).toString().padStart(2, '0');
-        document.getElementById('countdown').textContent = `${hh}:${mm}:${ss}`;
-
-        // রমজান আপডেট
-        const isAfterMaghrib = (now.getHours() > 18) || (now.getHours() === 18 && now.getMinutes() >= 1);
-        document.getElementById('ramadan').textContent = (isAfterMaghrib ? 9 : 8) + " Ramadan 1447 AH";
+    function showMessage(key) {
+        document.getElementById('msg-text').innerText = messages[key];
+        document.getElementById('msg-panel').style.bottom = "0";
+        document.getElementById('main-dash').style.transform = "scale(0.9)";
     }
 
-    setInterval(updateApp, 1000);
-    updateApp();
-</script>
+    function hideMessage() {
+        document.getElementById('msg-panel').style.bottom = "-100%";
+        document.getElementById('main-dash').style.transform = "scale(1)";
+    }
 
+    async function syncTime() {
+        try {
+            const res = await fetch('https://worldtimeapi.org/api/timezone/Asia/Dhaka');
+            const data = await res.json();
+            timeOffset = new Date(data.datetime) - new Date();
+        } catch(e) {}
+    }
+
+    function updateApp() {
+        const now = new Date(new Date().getTime() + timeOffset);
+        document.getElementById('clock').textContent = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0') + ":" + now.getSeconds().toString().padStart(2,'0');
+        document.getElementById('live-date').textContent = now.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+        
+        const ramadanSchedule = {9:{s:{h:4,m:57},i:{h:18,m:7}},10:{s:{h:4,m:57},i:{h:18,m:7}},11:{s:{h:4,m:56},i:{h:18,m:7}},12:{s:{h:4,m:55},i:{h:18,m:8}},13:{s:{h:4,m:54},i:{h:18,m:8}},14:{s:{h:4,m:53},i:{h:18,m:9}},15:{s:{h:4,m:52},i:{h:18,m:9}},16:{s:{h:4,m:51},i:{h:18,m:10}},17:{s:{h:4,m:50},i:{h:18,m:10}},18:{s:{h:4,m:49},i:{h:18,m:10}},19:{s:{h:4,m:48},i:{h:18,m:11}},20:{s:{h:4,m:47},i:{h:18,m:11}}};
+        const d = now.getDate();
+        const cur = ramadanSchedule[d] || ramadanSchedule[9];
+        const ramadanStart = new Date("2026-02-19");
+        let diffDays = Math.floor((now - ramadanStart) / 86400000) + 1;
+        if ((now.getHours()*60 + now.getMinutes()) >= (cur.i.h*60 + cur.i.m)) diffDays++;
+        document.getElementById('ramadan').textContent = diffDays + " Ramadan 1447 AH";
+        document.getElementById('sehri-val').textContent = cur.s.h + ":" + cur.s.m.toString().padStart(2,'0');
+        document.querySelector('#maghrib-row .time').textContent = cur.i.h + ":" + cur.i.m.toString().padStart(2,'0');
+        document.querySelector('#fajr-row .time').textContent = cur.s.h + ":" + (cur.s.m + 6).toString().padStart(2,'0');
+
+        const sch = [{id:'fajr',h:cur.s.h,m:cur.s.m+6},{id:'dhuhr',h:12,m:15},{id:'asr',h:16,m:15},{id:'maghrib',h:cur.i.h,m:cur.i.m},{id:'isha',h:19,m:20}];
+        let next = null;
+        const curM = now.getHours()*60 + now.getMinutes();
+        sch.forEach(p => document.getElementById(p.id+'-row').classList.remove('active'));
+        for(let p of sch) { if((p.h*60+p.m) > curM) { next = p; break; } }
+        if(!next) next = sch[0];
+        document.getElementById(next.id+'-row').classList.add('active');
+
+        let target = new Date(now);
+        target.setHours(next.h, next.m, 0);
+        if(target < now) target.setDate(target.getDate()+1);
+        let diff = target - now;
+        document.getElementById('countdown').textContent = Math.floor(diff/3600000).toString().padStart(2,'0') + ":" + Math.floor((diff%3600000)/60000).toString().padStart(2,'0') + ":" + Math.floor((diff%60000)/1000).toString().padStart(2,'0');
+    }
+    syncTime(); setInterval(updateApp, 1000); updateApp();
+</script>
 </body>
 </html>
